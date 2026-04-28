@@ -764,4 +764,110 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
 </script>
 	
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = 'https://tbdgrypptyebfhnjgigr.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_yBx-WlnUuUF4MmOaAx1N4Q_WgZMm0so';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function trackVisit() {
+        if (sessionStorage.getItem('visited')) return;
+        sessionStorage.setItem('visited', 'true');
+
+        const TZ = 'Africa/Maputo';
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: TZ });
+
+        const { data, error } = await supabaseClient
+            .from('site_stats')
+            .select('id, visits')
+            .eq('date', today)
+            .maybeSingle();
+
+        if (data) {
+            await supabaseClient.from('site_stats').update({ visits: data.visits + 1 }).eq('id', data.id);
+        } else {
+            await supabaseClient.from('site_stats').insert([{ date: today, visits: 1, views: 0 }]);
+        }
+    }
+
+    trackVisit();
+
+    async function loadDynamicProducts() {
+        const { data: products, error } = await supabaseClient
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: true }); // ascending so when we insertafterbegin, newest is first
+
+        if (error || !products) return;
+
+        const container = document.querySelector('.elementor-element-328dc2ab .e-con-inner');
+        if (!container) return;
+
+        products.forEach(product => {
+            const isVideo = product.media_type === 'video';
+            const mediaHtml = isVideo 
+                ? `<video class="elementor-video" src="${product.media_url}" controls preload="none" controlslist="nodownload"></video>`
+                : `<img src="${product.media_url}" style="width:100%; border-radius:10px;"/>`;
+
+            const descHtml = Array.isArray(product.description) 
+                ? product.description.map(d => `<p>${d}</p>`).join('')
+                : `<p>${product.description || ''}</p>`;
+
+            const productHtml = `
+                <div class="elementor-element e-con-full e-flex e-con e-child dynamic-product" style="margin-bottom: 20px; padding: 15px; border-radius: 15px; background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.05);">
+                    <div class="elementor-widget elementor-widget-heading">
+                        <h2 class="elementor-heading-title elementor-size-default" style="text-align: center;">🔥${product.title}🔥</h2>
+                    </div>
+                    <div class="elementor-widget elementor-widget-video">
+                        <div class="e-hosted-video elementor-wrapper elementor-open-inline" style="text-align: center; margin: 15px 0;">
+                            ${mediaHtml}
+                        </div>
+                    </div>
+                    <div class="elementor-widget elementor-widget-text-editor" style="text-align: center;">
+                        ${descHtml}
+                        ${product.price ? `<p style="font-weight: bold; color: green; font-size: 1.2rem;">${product.price}</p>` : ''}
+                    </div>
+                    <div class="elementor-align-center elementor-widget elementor-widget-button" style="text-align: center; margin-top: 15px;">
+                        <a class="elementor-button elementor-button-link elementor-size-sm" href="${product.telegram_link || 'https://t.me/Dmkhalifa'}">
+                            <span class="elementor-button-content-wrapper">
+                                <span class="elementor-button-icon">
+                                    <svg aria-hidden="true" class="e-font-icon-svg e-fas-money-check-alt" viewBox="0 0 640 512" xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px; margin-right: 8px; fill: white;"><path d="M608 32H32C14.33 32 0 46.33 0 64v384c0 17.67 14.33 32 32 32h576c17.67 0 32-14.33 32-32V64c0-17.67-14.33-32-32-32zM176 327.88V344c0 4.42-3.58 8-8 8h-16c-4.42 0-8-3.58-8-8v-16.29c-11.29-.58-22.27-4.52-31.37-11.35-3.9-2.93-4.1-8.77-.57-12.14l11.75-11.21c2.77-2.64 6.89-2.76 10.13-.73 3.87 2.42 8.26 3.72 12.82 3.72h28.11c6.5 0 11.8-5.92 11.8-13.19 0-5.95-3.61-11.19-8.77-12.73l-45-13.5c-18.59-5.58-31.58-23.42-31.58-43.39 0-24.52 19.05-44.44 42.67-45.07V152c0-4.42 3.58-8 8-8h16c4.42 0 8 3.58 8 8v16.29c11.29.58 22.27 4.51 31.37 11.35 3.9 2.93 4.1 8.77.57 12.14l-11.75 11.21c-2.77 2.64-6.89 2.76-10.13.73-3.87-2.43-8.26-3.72-12.82-3.72h-28.11c-6.5 0-11.8 5.92-11.8 13.19 0 5.95 3.61 11.19 8.77 12.73l45 13.5c18.59 5.58 31.58 23.42 31.58 43.39 0 24.53-19.05 44.44-42.67 45.07zM416 312c0 4.42-3.58 8-8 8H296c-4.42 0-8-3.58-8-8v-16c0-4.42 3.58-8 8-8h112c4.42 0 8 3.58 8 8v16zm160 0c0 4.42-3.58 8-8 8h-80c-4.42 0-8-3.58-8-8v-16c0-4.42 3.58-8 8-8h80c4.42 0 8 3.58 8 8v16zm0-96c0 4.42-3.58 8-8 8H296c-4.42 0-8-3.58-8-8v-16c0-4.42 3.58-8 8-8h272c4.42 0 8 3.58 8 8v16z"></path></svg>
+                                </span>
+                                <span class="elementor-button-text">BUY NOW ⭐</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('afterbegin', productHtml);
+        });
+
+        attachVideoTracking();
+    }
+
+    function attachVideoTracking() {
+        const videos = document.querySelectorAll('video:not([data-tracked])');
+        videos.forEach(video => {
+            video.dataset.tracked = 'true';
+            video.addEventListener('play', async function onPlay() {
+                video.removeEventListener('play', onPlay);
+                
+                const TZ = 'Africa/Maputo';
+                const today = new Date().toLocaleDateString('en-CA', { timeZone: TZ });
+                const { data } = await supabaseClient.from('site_stats').select('id, views').eq('date', today).maybeSingle();
+                if (data) {
+                    await supabaseClient.from('site_stats').update({ views: (data.views || 0) + 1 }).eq('id', data.id);
+                } else {
+                    await supabaseClient.from('site_stats').insert([{ date: today, visits: 1, views: 1 }]);
+                }
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDynamicProducts();
+        attachVideoTracking();
+    });
+</script>
 </body></html>
