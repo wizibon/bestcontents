@@ -847,12 +847,43 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
         attachVideoTracking();
     }
 
+
+    const videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const video = entry.target;
+            if (entry.isIntersecting) {
+                // Only try to play if the video is ready
+                let playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        // Browser blocked autoplay
+                        console.log('Autoplay prevented by browser');
+                    });
+                }
+            } else {
+                video.pause();
+            }
+        });
+    }, {
+        threshold: 0.5 // Trigger when 50% of the video is visible
+    });
+
     function attachVideoTracking() {
         const videos = document.querySelectorAll('video:not([data-tracked])');
         videos.forEach(video => {
             video.dataset.tracked = 'true';
+            
+            // Auto-play requirements for modern browsers
+            video.muted = true;
+            video.playsInline = true;
+            video.loop = true;
+            
+            // Observe for scroll autoplay
+            videoObserver.observe(video);
+
             video.addEventListener('play', async function onPlay() {
-                video.removeEventListener('play', onPlay);
+                if (video.dataset.viewCounted) return;
+                video.dataset.viewCounted = 'true';
                 
                 const TZ = 'Africa/Maputo';
                 const today = new Date().toLocaleDateString('en-CA', { timeZone: TZ });
@@ -865,6 +896,7 @@ const a=JSON.parse(document.getElementById("wp-emoji-settings").textContent),o=(
             });
         });
     }
+
 
     document.addEventListener('DOMContentLoaded', () => {
         loadDynamicProducts();
