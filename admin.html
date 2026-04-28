@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --card-bg: rgba(255, 255, 255, 0.04);
+            --border: rgba(255, 255, 255, 0.1);
+            --accent: #a855f7;
+            --accent-bright: #c084fc;
+            --accent-glow: rgba(168, 85, 247, 0.4);
+            --text: #ffffff;
+            --text-dim: #94a3b8;
+            --danger: #ff4646;
+            --success: #00f291;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+
+
+        #login-screen {
+            background: rgba(10, 10, 10, 0.6);
+            padding: 2.5rem;
+            border-radius: 24px;
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid var(--border);
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.8), 0 0 15px var(--accent-glow);
+            animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #fff 0%, var(--accent-bright) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+            letter-spacing: -0.5px;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #f8fafc;
+            letter-spacing: -0.5px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            margin-bottom: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: white;
+            box-sizing: border-box;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            background: rgba(168, 85, 247, 0.05);
+            outline: none;
+            box-shadow: 0 0 0 4px var(--accent-glow), inset 0 0 10px rgba(168, 85, 247, 0.1);
+            transform: scale(1.02);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--accent), #6366f1);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 30px -5px rgba(168, 85, 247, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 15px 30px -10px rgba(168, 85, 247, 0.6);
+            filter: brightness(1.1);
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: rotate(45deg);
+            transition: 0.8s;
+        }
+
+        button:hover::after {
+            left: 100%;
+        }
+
+        #dashboard {
+            display: none;
+            width: 100%;
+            max-width: 1100px;
+            padding: 1.5rem;
+            animation: fadeIn 1s ease;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: clamp(1.4rem, 4vw, 1.8rem);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1000px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            #dashboard {
+                padding: 1rem;
+            }
+
+            .card {
+                padding: 1.2rem;
+                border-radius: 16px;
+            }
+
+            .header {
+                margin-bottom: 1.5rem;
+            }
+
+            #login-screen {
+                padding: 2rem 1.2rem;
+                width: 90%;
+            }
+        }
+
+        .card {
+            background: rgba(15, 15, 15, 0.4);
+            padding: 1.8rem;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(25px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            transition: all 0.4s ease;
+            text-align: center;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-5px) scale(1.02);
+            background: rgba(255, 255, 255, 0.04);
+            border-color: var(--accent);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 10px var(--accent-glow);
+        }
+
+        .product-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            margin-bottom: 1rem;
+            border-radius: 20px;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+            gap: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .product-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .product-info {
+                width: 100%;
+            }
+
+            .delete-btn {
+                width: 100%;
+                margin-top: 0.5rem;
+            }
+        }
+
+        .product-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            overflow: hidden;
+        }
+
+        .product-info img,
+        .product-info video {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
+        }
+
+        .product-info div {
+            overflow: hidden;
+        }
+
+        .product-info div div {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .delete-btn {
+            background: rgba(255, 70, 70, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(255, 70, 70, 0.2);
+            width: auto;
+            padding: 10px 20px;
+            font-weight: 600;
+            box-shadow: none;
+        }
+
+        .delete-btn:hover {
+            background: var(--danger);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 70, 70, 0.4);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .file-upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            text-align: center;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            background: rgba(255, 255, 255, 0.01);
+            font-size: 0.95rem;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--accent);
+            background: rgba(168, 85, 247, 0.05);
+            color: #fff;
+            box-shadow: inset 0 0 20px rgba(168, 85, 247, 0.1);
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- LOGIN SECTION -->
+    <div id="login-screen">
+        <h1>Admin Access</h1>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <p id="login-error" style="color: var(--danger); margin-top: 1rem; display: none;">Invalid credentials</p>
+    </div>
+
+    <!-- DASHBOARD SECTION -->
+    <div id="dashboard">
+        <div class="header">
+            <h1>Panel Management</h1>
+            <button onclick="logout()"
+                style="width: auto; padding: 10px 20px; background: rgba(255,255,255,0.1)">Logout</button>
+        </div>
+
+        <div class="card" style="margin-bottom: 2rem;">
+            <h2 style="display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3v18h18M7 16l4-4 4 4 5-5" />
+                </svg>
+                Site Performance
+            </h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem;">
+                <div class="stat-box">
+                    <div
+                        style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
+                        Visits Today</div>
+                    <div id="stat-visits"
+                        style="font-size: 2rem; font-weight: 700; margin-top: 0.5rem; color: var(--accent);">0</div>
+                </div>
+                <div class="stat-box">
+                    <div
+                        style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
+                        Video Views</div>
+                    <div id="stat-views"
+                        style="font-size: 2rem; font-weight: 700; margin-top: 0.5rem; color: var(--accent);">0</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; background: rgba(0,0,0,0.2); border-radius: 16px; padding: 1.5rem;">
+                <h3
+                    style="font-size: 1rem; margin-top: 0; color: var(--accent-bright); display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                    Top 10 Most Viewed
+                </h3>
+                <div id="top-10-list" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                    <div style="color: var(--text-dim); font-size: 0.9rem;">Loading ranking...</div>
+                </div>
+            </div>
+
+            <details style="margin-top: 2rem;">
+                <summary
+                    style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--accent); font-weight: 600; font-size: 0.9rem;">
+                    <span>View 30-Day History</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <path d="M19 9l-7 7-7-7" />
+                    </svg>
+                </summary>
+                <div id="stats-history"
+                    style="margin-top: 1.5rem; max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 0.5rem;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border); text-align: left;">
+                                <th style="padding: 12px; color: var(--text-dim);">Date</th>
+                                <th style="padding: 12px; color: var(--text-dim);">Visits</th>
+                                <th style="padding: 12px; color: var(--text-dim);">Views</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body"></tbody>
+                    </table>
+                </div>
+            </details>
+
+            <details style="margin-top: 2rem;">
+                <summary
+                    style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--danger); font-weight: 600; font-size: 0.9rem;">
+                    <span>View Site Error Logs</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <path d="M19 9l-7 7-7-7" />
+                    </svg>
+                </summary>
+                <div style="margin-top: 1rem; text-align: right;">
+                    <button onclick="clearErrorLogs()"
+                        style="width: auto; padding: 6px 12px; background: rgba(255, 70, 70, 0.1); color: var(--danger); font-size: 0.8rem; border: 1px solid rgba(255, 70, 70, 0.2); box-shadow: none;">Clear
+                        Logs</button>
+                </div>
+                <div id="error-logs-list"
+                    style="margin-top: 0.8rem; max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: 0.8rem;">
+                    <div style="color: var(--text-dim); font-size: 0.9rem;">Loading error logs...</div>
+                </div>
+            </details>
+        </div>
+
+        <!-- FINANCIAL TRACKER SECTION -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h2 style="display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1v22m5-18H7c-1.5 0-3 1.5-3 3s1.5 3 3 3h10c1.5 0 3 1.5 3 3s-1.5 3-3 3H6" />
+                </svg>
+                Financial Earnings
+            </h2>
+            <div style="max-width: 300px; margin: 0 auto 1.5rem auto; text-align: center;">
+                <label
+                    style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.8rem; display: block;">Add
+                    Earnings (Or negative to fix)</label>
+                <input type="text" id="earn-global" placeholder="Ex: 50.00"
+                    style="text-align: center; font-size: 1.5rem; font-weight: 800; color: var(--success); border-color: var(--success); background: rgba(0, 242, 145, 0.05); padding: 12px; border-radius: 12px;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;">
+                <div class="stat-box">
+                    <div
+                        style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.5rem;">
+                        Week</div>
+                    <div id="disp-week" style="font-weight: 700; font-size: 1.3rem; color: #fff;">$0.00</div>
+                </div>
+                <div class="stat-box">
+                    <div
+                        style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.5rem;">
+                        Month</div>
+                    <div id="disp-month" style="font-weight: 700; font-size: 1.3rem; color: #fff;">$0.00</div>
+                </div>
+                <div class="stat-box">
+                    <div
+                        style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.5rem;">
+                        3 Months</div>
+                    <div id="disp-quarter" style="font-weight: 700; font-size: 1.3rem; color: #fff;">$0.00</div>
+                </div>
+                <div class="stat-box">
+                    <div
+                        style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.5rem;">
+                        Year</div>
+                    <div id="disp-year" style="font-weight: 700; font-size: 1.3rem; color: #fff;">$0.00</div>
+                </div>
+            </div>
+            <button onclick="saveEarnings()"
+                style="margin-top: 1.5rem; background: linear-gradient(135deg, var(--success), #059669); font-size: 1rem; padding: 12px;">
+                + Add to Balance
+            </button>
+        </div>
+
+
+
+        <div class="grid">
+            <!-- ADD ITEM FORM -->
+            <div class="card">
+                <h2>Add New Content</h2>
+                <input type="text" id="p-title" placeholder="Item Title (e.g. VIP CHANNEL)">
+                <input type="text" id="p-category" placeholder="Category Name (Optional)">
+                <input type="text" id="p-price" placeholder="Price (e.g. $35)">
+                <input type="text" id="p-link" placeholder="Telegram Link" value="https://t.me/Dmkhalifa">
+                <textarea id="p-desc" placeholder="Desc points (one per line)" rows="4"></textarea>
+
+                <div class="file-upload-area" onclick="document.getElementById('p-media').click()">
+                    <span id="file-label">Click to upload Image or Video (Max 20MB)</span>
+                    <input type="file" id="p-media" style="display: none" accept="image/*,video/*"
+                        onchange="handleFileSelect(this)">
+                </div>
+
+                <button id="submit-btn" onclick="addItem()">
+                    <span id="btn-text">Publish Now</span>
+                    <div class="spinner" id="btn-spinner"></div>
+                </button>
+            </div>
+
+            <!-- ITEMS LIST -->
+            <div class="card">
+                <h2>Current Items</h2>
+                <div id="products-list">
+                    <!-- Items will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://tbdgrypptyebfhnjgigr.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_yBx-WlnUuUF4MmOaAx1N4Q_WgZMm0so';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let selectedFile = null;
+
+        function checkSession() {
+            const loginTime = localStorage.getItem('admin_login_time');
+            if (loginTime) {
+                const elapsedHours = (Date.now() - parseInt(loginTime)) / (1000 * 60 * 60);
+                if (elapsedHours < 12) {
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    loadItems();
+                    loadStats();
+                    loadEarnings();
+                    loadErrorLogs();
+                } else {
+                    localStorage.removeItem('admin_login_time');
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', checkSession);
+
+        function login() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            if (u === 'wizikid' && p === '8656') {
+                localStorage.setItem('admin_login_time', Date.now().toString());
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadItems();
+                loadStats();
+                loadEarnings();
+                loadErrorLogs();
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        }
+
+        function logout() { 
+            localStorage.removeItem('admin_login_time');
+            location.reload(); 
+        }
+
+        function handleFileSelect(input) {
+            if (input.files[0]) {
+                selectedFile = input.files[0];
+                document.getElementById('file-label').innerText = `Selected: ${selectedFile.name}`;
+            }
+        }
+
+        async function addItem() {
+            const title = document.getElementById('p-title').value;
+            const category = document.getElementById('p-category').value;
+            const price = document.getElementById('p-price').value;
+            const link = document.getElementById('p-link').value;
+            const descRaw = document.getElementById('p-desc').value;
+            const desc = descRaw.split('\n').filter(line => line.trim() !== '');
+
+            if (!title || !selectedFile) {
+                alert('Please provide at least a title and a file.');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                // 1. Upload Media
+                const fileExt = selectedFile.name.split('.').pop();
+                const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+                const filePath = `uploads/${fileName}`;
+
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('media')
+                    .upload(filePath, selectedFile);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabaseClient.storage
+                    .from('media')
+                    .getPublicUrl(filePath);
+
+                // 2. Save Item to DB
+                const mediaType = selectedFile.type.startsWith('video') ? 'video' : 'image';
+
+                const { error: dbError } = await supabaseClient
+                    .from('products')
+                    .insert([{
+                        title, category, price,
+                        telegram_link: link,
+                        description: desc,
+                        media_url: publicUrl,
+                        media_type: mediaType
+                    }]);
+
+                if (dbError) throw dbError;
+
+                alert('Item added successfully!');
+                resetForm();
+                loadItems();
+            } catch (err) {
+                console.error(err);
+                alert('Error: ' + err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function loadItems() {
+            const list = document.getElementById('products-list');
+            list.innerHTML = 'Loading...';
+
+            const { data, error } = await supabaseClient
+                .from('products')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                list.innerHTML = 'Error loading items.';
+                return;
+            }
+
+            list.innerHTML = data.map(item => `
+                <div class="product-item">
+                    <div class="product-info">
+                        ${item.media_type === 'video' ? `<video src="${item.media_url}"></video>` : `<img src="${item.media_url}">`}
+                        <div>
+                            <div style="font-weight: bold">${item.title}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-dim)">${item.category || 'No Category'}</div>
+                        </div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteItem('${item.id}', '${item.media_url}')">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        async function deleteItem(id, url) {
+            if (!confirm('Are you sure you want to delete this?')) return;
+
+            // Delete from DB
+            const { error: dbError } = await supabaseClient
+                .from('products')
+                .delete()
+                .eq('id', id);
+
+            if (dbError) { alert('Error deleting from DB'); return; }
+
+            // Delete from Storage
+            try {
+                const fileName = url.split('/').pop();
+                await supabaseClient.storage.from('media').remove([`uploads/${fileName}`]);
+            } catch (e) { }
+
+            loadItems();
+        }
+
+        function setLoading(isLoading) {
+            document.getElementById('btn-text').style.display = isLoading ? 'none' : 'block';
+            document.getElementById('btn-spinner').style.display = isLoading ? 'block' : 'none';
+            document.getElementById('submit-btn').disabled = isLoading;
+        }
+
+        function resetForm() {
+            document.getElementById('p-title').value = '';
+            document.getElementById('p-category').value = '';
+            document.getElementById('p-price').value = '';
+            document.getElementById('p-link').value = 'https://t.me/Dmkhalifa';
+            document.getElementById('p-desc').value = '';
+            document.getElementById('p-media').value = '';
+            document.getElementById('file-label').innerText = 'Click to upload Image or Video (Max 20MB)';
+            selectedFile = null;
+        }
+
+        async function loadStats() {
+            const { data, error } = await supabaseClient
+                .from('site_stats')
+                .select('*')
+                .order('date', { ascending: false })
+                .limit(30);
+
+            if (error) {
+                console.error('Error loading stats:', error);
+                return;
+            }
+
+            if (data && data.length > 0) {
+                // Use Mozambique timezone (Africa/Maputo, UTC+2) for "today"
+                const TZ = 'Africa/Maputo';
+                const todayMZ = new Date().toLocaleDateString('en-CA', { timeZone: TZ }); // format: YYYY-MM-DD
+                const todayStat = data.find(s => s.date === todayMZ) || { visits: 0, views: 0 };
+
+                document.getElementById('stat-visits').innerText = todayStat.visits;
+                document.getElementById('stat-views').innerText = todayStat.views;
+
+                const historyBody = document.getElementById('history-body');
+                historyBody.innerHTML = data.map(s => `
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 12px;">${new Date(s.date + 'T12:00:00').toLocaleDateString('pt-BR', { timeZone: TZ })}</td>
+                        <td style="padding: 12px;">${s.visits}</td>
+                        <td style="padding: 12px;">${s.views}</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Load top 10 videos
+            const { data: topVideos, error: topError } = await supabaseClient
+                .from('products')
+                .select('title, views')
+                .order('views', { ascending: false })
+                .limit(10);
+
+            if (!topError && topVideos) {
+                const list = document.getElementById('top-10-list');
+                list.innerHTML = topVideos.map((v, i) => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 0.8rem 1.2rem; border-radius: 12px; border-left: 3px solid ${i < 3 ? 'var(--accent)' : 'transparent'}">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <span style="font-weight: 800; color: ${i < 3 ? 'var(--accent-bright)' : 'var(--text-dim)'}; font-size: 0.9rem;">#${i + 1}</span>
+                            <span style="font-weight: 500; font-size: 0.95rem;">${v.title}</span>
+                        </div>
+                        <span style="font-weight: 700; color: var(--accent); font-size: 0.95rem;">${v.views || 0} <span style="font-size: 0.7rem; color: var(--text-dim); font-weight: 400;">views</span></span>
+                    </div>
+                `).join('') || '<div style="color: var(--text-dim);">No views recorded yet.</div>';
+            }
+        }
+
+        async function loadEarnings() {
+            const { data, error } = await supabaseClient
+                .from('financial_transactions')
+                .select('*');
+
+            if (!error && data) {
+                // Mozambique timezone: Africa/Maputo (UTC+2)
+                const TZ = 'Africa/Maputo';
+
+                // Get "now" expressed in Mozambique local time
+                const nowMZ = new Date(new Date().toLocaleString('en-US', { timeZone: TZ }));
+                const currentMonth = nowMZ.getMonth();
+                const currentYear = nowMZ.getFullYear();
+
+                // Start of current week (Monday) in MZ time
+                const dayOfWeek = nowMZ.getDay() === 0 ? 6 : nowMZ.getDay() - 1; // Monday = 0
+                const startOfWeek = new Date(nowMZ);
+                startOfWeek.setDate(nowMZ.getDate() - dayOfWeek);
+                startOfWeek.setHours(0, 0, 0, 0);
+
+                // Start of current month in MZ time
+                const startOfMonth = new Date(currentYear, currentMonth, 1);
+
+                // Start of current year in MZ time
+                const startOfYear = new Date(currentYear, 0, 1);
+
+                // 90 days ago in MZ time
+                const startOf90 = new Date(nowMZ);
+                startOf90.setDate(nowMZ.getDate() - 90);
+                startOf90.setHours(0, 0, 0, 0);
+
+                let sumWeek = 0, sumMonth = 0, sumQuarter = 0, sumYear = 0;
+
+                data.forEach(t => {
+                    // Convert transaction time to MZ local time for comparison
+                    const dLocal = new Date(new Date(t.created_at).toLocaleString('en-US', { timeZone: TZ }));
+                    const amount = parseFloat(t.amount) || 0;
+
+                    if (dLocal >= startOfWeek) sumWeek += amount;
+                    if (dLocal >= startOfMonth) sumMonth += amount;
+                    if (dLocal >= startOf90) sumQuarter += amount;
+                    if (dLocal >= startOfYear) sumYear += amount;
+                });
+
+                document.getElementById('disp-week').innerText = '$' + sumWeek.toFixed(2);
+                document.getElementById('disp-month').innerText = '$' + sumMonth.toFixed(2);
+                document.getElementById('disp-quarter').innerText = '$' + sumQuarter.toFixed(2);
+                document.getElementById('disp-year').innerText = '$' + sumYear.toFixed(2);
+            }
+        }
+
+        async function saveEarnings() {
+            const valStr = document.getElementById('earn-global').value;
+            const val = parseFloat(valStr.replace(',', '.'));
+
+            if (isNaN(val)) {
+                alert('Please enter a valid number.');
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('financial_transactions')
+                .insert([{ amount: val }]);
+
+            if (error) {
+                alert('Error adding earnings: ' + error.message);
+            } else {
+                document.getElementById('earn-global').value = '';
+                loadEarnings();
+            }
+        }
+
+        async function loadErrorLogs() {
+            const list = document.getElementById('error-logs-list');
+            list.innerHTML = 'Loading error logs...';
+
+            const { data, error } = await supabaseClient
+                .from('error_logs')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(50);
+
+            if (error) {
+                list.innerHTML = '<div style="color: var(--danger);">Error loading logs.</div>';
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                list.innerHTML = '<div style="color: var(--success); font-weight: 600; display: flex; align-items: center; gap: 0.5rem;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> No errors recorded!</div>';
+                return;
+            }
+
+            const TZ = 'Africa/Maputo';
+            list.innerHTML = data.map(log => {
+                const dateStr = new Date(log.created_at).toLocaleString('pt-BR', { timeZone: TZ });
+                return `
+                    <div style="background: rgba(255, 70, 70, 0.05); border-left: 4px solid var(--danger); padding: 1rem; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-dim);">
+                            <span>${dateStr}</span>
+                            <span style="font-family: monospace;">Line: ${log.line_number || '?'}</span>
+                        </div>
+                        <div style="font-weight: 600; color: #fff; margin-bottom: 0.5rem; word-break: break-all;">${log.error_message}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-dim); word-break: break-all; margin-bottom: 0.5rem;">Source: ${log.error_source || 'N/A'}</div>
+                        <div style="font-size: 0.75rem; color: rgba(255,255,255,0.3); font-style: italic;">User Agent: ${log.user_agent || 'Unknown'}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function clearErrorLogs() {
+            if (!confirm('Are you sure you want to delete all error logs?')) return;
+
+            // Delete all records by matching a condition that is always true
+            const { error } = await supabaseClient
+                .from('error_logs')
+                .delete()
+                .not('id', 'is', null);
+
+            if (error) {
+                alert('Error clearing logs: ' + error.message);
+            } else {
+                loadErrorLogs();
+            }
+        }
+    </script>
+</body>
+
+</html>
