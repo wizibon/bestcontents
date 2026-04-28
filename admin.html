@@ -273,7 +273,8 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
     
-        /* Dynamic Moving Animations */
+        
+        /* Dynamic Moving Animations (Optimized) */
         @keyframes floatSlow {
             0% { transform: translateY(0) rotate(0deg); }
             50% { transform: translateY(-8px) rotate(0.5deg); }
@@ -281,30 +282,32 @@
         }
         
         @keyframes floatFast {
-            0% { transform: translateY(0) rotate(0deg); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 255, 162, 0.02); }
-            50% { transform: translateY(-12px) rotate(-0.5deg); box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), inset 0 0 30px rgba(0, 255, 162, 0.05); }
-            100% { transform: translateY(0) rotate(0deg); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 255, 162, 0.02); }
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(-0.5deg); }
+            100% { transform: translateY(0) rotate(0deg); }
         }
 
         @keyframes glitchText {
-            0% { text-shadow: 0 0 10px rgba(0, 255, 162, 0.5); }
-            50% { text-shadow: -2px 0 #ff0055, 2px 0 #00ffff; }
-            51% { text-shadow: 0 0 10px rgba(0, 255, 162, 0.5); }
-            100% { text-shadow: 0 0 10px rgba(0, 255, 162, 0.5); }
+            0% { transform: translate(0); }
+            50% { transform: translate(-2px, 0); color: #ff0055; }
+            51% { transform: translate(0); color: var(--accent); }
+            100% { transform: translate(0); color: var(--accent); }
         }
 
         @keyframes pulseGlow {
-            0% { box-shadow: 0 0 10px rgba(0, 255, 162, 0.2), inset 0 0 10px rgba(0, 255, 162, 0.1); }
-            50% { box-shadow: 0 0 25px rgba(0, 255, 162, 0.5), inset 0 0 20px rgba(0, 255, 162, 0.3); }
-            100% { box-shadow: 0 0 10px rgba(0, 255, 162, 0.2), inset 0 0 10px rgba(0, 255, 162, 0.1); }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
         }
 
         #login-screen {
             animation: floatSlow 6s ease-in-out infinite !important;
+            will-change: transform;
         }
 
         .card {
             animation: floatFast 8s ease-in-out infinite;
+            will-change: transform;
         }
         
         .card:nth-child(even) {
@@ -318,13 +321,14 @@
 
         button {
             animation: pulseGlow 3s infinite;
+            will-change: transform;
         }
 
     </style>
 </head>
 
 <body>
-    <canvas id="matrix-bg" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.6; pointer-events: none;"></canvas>
+    <canvas id="matrix-bg" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.4; pointer-events: none; transform: translateZ(0); will-change: transform;"></canvas>
 
     <!-- LOGIN SECTION -->
     <div id="login-screen">
@@ -896,7 +900,7 @@
             }
         }
 
-        setInterval(drawMatrix, 33);
+        setInterval(drawMatrix, 80);
 
         window.addEventListener('resize', () => {
             matrixWidth = matrixCanvas.width = window.innerWidth;
