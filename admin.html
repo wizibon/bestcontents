@@ -332,11 +332,25 @@
 
     <!-- LOGIN SECTION -->
     <div id="login-screen">
-        <h1>Admin Access</h1>
-        <input type="text" id="username" placeholder="Username">
-        <input type="password" id="password" placeholder="Password">
-        <button onclick="login()">Login</button>
-        <p id="login-error" style="color: var(--danger); margin-top: 1rem; display: none;">Invalid credentials</p>
+        <div style="text-align: left; margin-bottom: 1.5rem;">
+            <span style="color: var(--accent); font-family: monospace; font-size: 0.75rem; letter-spacing: 3px;">SYSTEM://TERMINAL v4.7.2</span>
+            <div style="height: 1px; background: linear-gradient(90deg, var(--accent), transparent); margin-top: 0.5rem;"></div>
+        </div>
+        <h1 style="font-family: monospace; font-size: 1.4rem; letter-spacing: 3px;">⟨ ACCESS TERMINAL ⟩</h1>
+        <div id="terminal-output" style="text-align: left; font-family: 'Courier New', monospace; font-size: 0.8rem; color: var(--accent); margin-bottom: 1.5rem; min-height: 24px; line-height: 1.6;"></div>
+        <div style="position: relative;">
+            <span style="position: absolute; left: 14px; top: 12px; color: var(--accent); font-family: monospace; font-size: 0.9rem;">usr@</span>
+            <input type="text" id="username" placeholder="enter_username" style="padding-left: 55px; font-family: 'Courier New', monospace;">
+        </div>
+        <div style="position: relative;">
+            <span style="position: absolute; left: 14px; top: 12px; color: var(--accent); font-family: monospace; font-size: 0.9rem;">pwd@</span>
+            <input type="password" id="password" placeholder="enter_password" style="padding-left: 55px; font-family: 'Courier New', monospace;">
+        </div>
+        <button onclick="login()" style="font-family: monospace; letter-spacing: 3px;">[ INITIATE ACCESS ]</button>
+        <p id="login-error" style="color: var(--danger); margin-top: 1rem; display: none; font-family: monospace; font-size: 0.85rem;">⚠ ACCESS DENIED — INVALID CREDENTIALS</p>
+        <div id="hacker-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:9999; overflow:hidden;">
+            <div id="hack-terminal" style="padding: 30px; font-family: 'Courier New', monospace; font-size: 0.85rem; color: var(--accent); line-height: 1.8; max-width: 700px; margin: 0 auto;"></div>
+        </div>
     </div>
 
     <!-- DASHBOARD SECTION -->
@@ -541,16 +555,80 @@
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
             if (u === 'wizikid' && p === '8656') {
-                localStorage.setItem('admin_login_time', Date.now().toString());
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
-                loadItems();
-                loadStats();
-                loadEarnings();
-                loadErrorLogs();
+                runHackerAnimation();
             } else {
-                document.getElementById('login-error').style.display = 'block';
+                const errEl = document.getElementById('login-error');
+                errEl.style.display = 'block';
+                errEl.style.animation = 'none';
+                errEl.offsetHeight;
+                errEl.style.animation = 'glitchText 0.3s ease 3';
             }
+        }
+
+        function runHackerAnimation() {
+            const overlay = document.getElementById('hacker-overlay');
+            const terminal = document.getElementById('hack-terminal');
+            overlay.style.display = 'block';
+            terminal.innerHTML = '';
+
+            const lines = [
+                { text: '> Initializing secure connection...', delay: 0 },
+                { text: '> Connecting to server 192.168.1.' + Math.floor(Math.random()*255) + '...', delay: 400 },
+                { text: '[OK] Connection established.', delay: 800, color: '#00ffa2' },
+                { text: '', delay: 1000 },
+                { text: '> Scanning open ports...', delay: 1200 },
+                { text: '  PORT 22 (SSH)      — OPEN', delay: 1500 },
+                { text: '  PORT 443 (HTTPS)   — OPEN', delay: 1700 },
+                { text: '  PORT 3306 (DB)     — FILTERED', delay: 1900, color: '#ffaa00' },
+                { text: '  PORT 8080 (ADMIN)  — OPEN', delay: 2100 },
+                { text: '[OK] 3 open ports detected.', delay: 2400, color: '#00ffa2' },
+                { text: '', delay: 2600 },
+                { text: '> Bypassing firewall layer 1/3...', delay: 2800 },
+                { text: '> Bypassing firewall layer 2/3...', delay: 3200 },
+                { text: '> Bypassing firewall layer 3/3...', delay: 3600 },
+                { text: '[OK] Firewall bypassed.', delay: 4000, color: '#00ffa2' },
+                { text: '', delay: 4200 },
+                { text: '> Decrypting admin credentials...', delay: 4400 },
+                { text: '  ██████████░░░░░░░░░░ 40%', delay: 4700 },
+                { text: '  █████████████░░░░░░░ 65%', delay: 5000 },
+                { text: '  ██████████████████░░ 90%', delay: 5300 },
+                { text: '  ████████████████████ 100%', delay: 5600, color: '#00ffa2' },
+                { text: '[OK] Credentials verified.', delay: 5900, color: '#00ffa2' },
+                { text: '', delay: 6100 },
+                { text: '> Injecting admin session token...', delay: 6300 },
+                { text: '[OK] Token: ' + crypto.randomUUID().substring(0,16).toUpperCase(), delay: 6600, color: '#00ffa2' },
+                { text: '', delay: 6800 },
+                { text: '████████████████████████████████████████', delay: 7000, color: '#00ffa2' },
+                { text: '  ACCESS GRANTED — WELCOME BACK, ADMIN', delay: 7200, color: '#fff', bold: true },
+                { text: '████████████████████████████████████████', delay: 7400, color: '#00ffa2' },
+            ];
+
+            lines.forEach(line => {
+                setTimeout(() => {
+                    const div = document.createElement('div');
+                    div.textContent = line.text;
+                    if (line.color) div.style.color = line.color;
+                    if (line.bold) { div.style.fontWeight = '700'; div.style.fontSize = '1.1rem'; div.style.textAlign = 'center'; }
+                    terminal.appendChild(div);
+                    terminal.scrollTop = terminal.scrollHeight;
+                }, line.delay);
+            });
+
+            setTimeout(() => {
+                overlay.style.transition = 'opacity 0.8s ease';
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    overlay.style.opacity = '1';
+                    localStorage.setItem('admin_login_time', Date.now().toString());
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    loadItems();
+                    loadStats();
+                    loadEarnings();
+                    loadErrorLogs();
+                }, 800);
+            }, 8200);
         }
 
         function logout() { 
