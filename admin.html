@@ -39,6 +39,7 @@
         }
 
         #login-screen {
+            display: none;
             background: rgba(0, 0, 0, 0.8);
             padding: 2.5rem;
             border-radius: 4px;
@@ -324,10 +325,65 @@
             will-change: transform;
         }
 
+    
+        /* Netflix Style Hacker Intro */
+        #intro-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            pointer-events: all;
+        }
+
+        .intro-text {
+            font-size: clamp(3rem, 12vw, 8rem);
+            font-weight: 900;
+            color: var(--accent);
+            letter-spacing: 20px;
+            text-transform: uppercase;
+            font-family: 'Space Grotesk', sans-serif;
+            animation: netflixHacker 3s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+            opacity: 0;
+            filter: blur(10px);
+        }
+
+        @keyframes netflixHacker {
+            0% { transform: scale(0.5); opacity: 0; filter: blur(20px); letter-spacing: 40px; }
+            40% { transform: scale(1); opacity: 1; filter: blur(0px); letter-spacing: 15px; }
+            65% { transform: scale(1.1); opacity: 1; filter: blur(0px); letter-spacing: 10px; }
+            100% { transform: scale(8); opacity: 0; filter: blur(10px); }
+        }
+
+        .intro-line {
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            margin-top: 10px;
+            animation: lineExpand 3s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+        }
+
+        @keyframes lineExpand {
+            0% { width: 0; opacity: 0; }
+            40% { width: 300px; opacity: 1; }
+            65% { width: 400px; opacity: 1; }
+            100% { width: 2000px; opacity: 0; }
+        }
+
     </style>
 </head>
 
 <body>
+    <div id="intro-screen">
+        <div class="intro-text">WIZI</div>
+        <div class="intro-line"></div>
+    </div>
     <canvas id="matrix-bg" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.4; pointer-events: none; transform: translateZ(0); will-change: transform;"></canvas>
 
     <!-- LOGIN SECTION -->
@@ -536,24 +592,44 @@
 
         let selectedFile = null;
 
-        function checkSession() {
+                function checkSession() {
             const loginTime = localStorage.getItem('admin_login_time');
+            let isLoggedIn = false;
             if (loginTime) {
                 const elapsedHours = (Date.now() - parseInt(loginTime)) / (1000 * 60 * 60);
                 if (elapsedHours < 12) {
-                    document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('dashboard').style.display = 'block';
-                    loadItems();
-                    loadStats();
-                    loadEarnings();
-                    loadErrorLogs();
+                    isLoggedIn = true;
                 } else {
                     localStorage.removeItem('admin_login_time');
                 }
             }
+
+            if (isLoggedIn) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadItems();
+                loadStats();
+                loadEarnings();
+                loadErrorLogs();
+            } else {
+                document.getElementById('login-screen').style.display = 'block';
+                document.getElementById('dashboard').style.display = 'none';
+            }
+        }
         }
 
-        window.addEventListener('DOMContentLoaded', checkSession);
+                window.addEventListener('DOMContentLoaded', () => {
+            // Wait for intro animation to finish
+            setTimeout(() => {
+                const intro = document.getElementById('intro-screen');
+                intro.style.transition = 'opacity 0.8s ease';
+                intro.style.opacity = '0';
+                setTimeout(() => {
+                    intro.style.display = 'none';
+                    checkSession();
+                }, 800);
+            }, 2200); 
+        });
 
         function login() {
             const u = document.getElementById('username').value;
