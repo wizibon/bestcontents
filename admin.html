@@ -353,20 +353,15 @@
         </div>
     </div>
 
-    <!-- REDIRECT OVERLAY -->
-    <div id="redirect-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:9999; overflow:hidden;">
-        <div id="redirect-terminal" style="padding: 30px; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ffa2; line-height: 1.8; max-width: 700px; margin: 0 auto;"></div>
-    </div>
-
     <!-- DASHBOARD SECTION -->
     <div id="dashboard">
-        <div class="header">
+                <div class="header">
             <h1>Panel Management</h1>
-            <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
-                <button onclick="hackerRedirect()"
-                    style="width: auto; padding: 10px 20px; background: transparent; border: 1px solid #00ffa2; font-family: monospace; letter-spacing: 2px; font-size: 0.8rem;">⟨ VISIT SITE ⟩</button>
+            <div style="display: flex; gap: 0.8rem;">
+                <button onclick="goToSite()"
+                    style="width: auto; padding: 10px 20px; background: rgba(0, 255, 162, 0.1); border: 1px solid var(--accent); color: var(--accent); font-weight: 600;">Visit Site</button>
                 <button onclick="logout()"
-                    style="width: auto; padding: 10px 20px; background: rgba(255,0,85,0.1); border: 1px solid #ff0055; color: #ff0055; font-family: monospace; letter-spacing: 2px; font-size: 0.8rem;">⟨ LOGOUT ⟩</button>
+                    style="width: auto; padding: 10px 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-dim);">Logout</button>
             </div>
         </div>
 
@@ -640,34 +635,26 @@
             }, 8200);
         }
 
-        function logout() { 
+                function logout() { 
             localStorage.removeItem('admin_login_time');
             location.reload(); 
         }
 
-        function hackerRedirect() {
-            const overlay = document.getElementById('redirect-overlay');
-            const terminal = document.getElementById('redirect-terminal');
+        function goToSite() {
+            const overlay = document.getElementById('hacker-overlay');
+            const terminal = document.getElementById('hack-terminal');
             overlay.style.display = 'block';
+            overlay.style.opacity = '1';
             terminal.innerHTML = '';
 
             const lines = [
-                { text: '> Scanning network interface...', delay: 0 },
-                { text: '[OK] eth0: 10.0.0.' + Math.floor(Math.random()*255) + ' — UP', delay: 400, color: '#00ffa2' },
-                { text: '', delay: 600 },
-                { text: '> Establishing encrypted tunnel...', delay: 800 },
-                { text: '  AES-256-GCM handshake... OK', delay: 1100 },
-                { text: '  TLS 1.3 negotiation... OK', delay: 1400 },
-                { text: '[OK] Tunnel active.', delay: 1700, color: '#00ffa2' },
-                { text: '', delay: 1900 },
-                { text: '> Injecting redirect payload...', delay: 2100 },
-                { text: '  Target: bestcontents.vercel.app', delay: 2400 },
-                { text: '  ██████████░░░░░░░░░░ 50%', delay: 2700 },
-                { text: '  ████████████████████ 100%', delay: 3000, color: '#00ffa2' },
-                { text: '', delay: 3200 },
-                { text: '████████████████████████████████████████', delay: 3400, color: '#00ffa2' },
-                { text: '  REDIRECTING TO LIVE SITE...', delay: 3600, color: '#fff', bold: true },
-                { text: '████████████████████████████████████████', delay: 3800, color: '#00ffa2' },
+                { text: '> Initiating redirection sequence...', delay: 0 },
+                { text: '> Disconnecting from secure admin node...', delay: 500 },
+                { text: '> Syncing session logs...', delay: 1000 },
+                { text: '> Re-routing to public server interface...', delay: 1500 },
+                { text: '████████████████████████████████████████', delay: 2000, color: '#00ffa2' },
+                { text: '  REDIRECTING TO PUBLIC DOMAIN...', delay: 2300, color: '#fff', bold: true },
+                { text: '████████████████████████████████████████', delay: 2600, color: '#00ffa2' },
             ];
 
             lines.forEach(line => {
@@ -683,7 +670,7 @@
 
             setTimeout(() => {
                 window.location.href = 'index.html';
-            }, 4500);
+            }, 3500);
         }
 
         function handleFileSelect(input) {
